@@ -1,12 +1,15 @@
 class CalculatorController {
     constructor() {
-
         this._dateEl = document.querySelector('.date');
         this._hourEl = document.querySelector('.hour');
         this._displayEl = document.querySelector('.expression');
+        this._prevEl = document.querySelector('.preview');
         this._expressionList = ['0'];
+        this._prev = 0;
         this.initialize();
         this.initAddEventsButtons();
+        this.initAddEventsKeyboardy();
+        this._ifResult = false;
     }
 
     initialize() {
@@ -24,24 +27,26 @@ class CalculatorController {
             return;
         }
         this._expressionList[this._expressionList.length-1] = (1/this.returnLast()).toString();
+        this._ifResult =true;
         this.attDisplay();
         
     }
 
     attDate() {
         let date = new Date();
-
         this._dateEl.innerHTML = date.toLocaleDateString('pt-BR');
         this._hourEl.innerHTML = date.toLocaleTimeString('pt-BR');
     }
 
     attDisplay(){
         this._displayEl.innerHTML = this._expressionList.join('');
+        this._prevEl.innerHTML = this._prev;
         this._displayEl.scrollBy(100,0);
     }
 
     clear(){
         this._expressionList = ['0'];
+        this._prev = '0';
         this.attDisplay();
     }
 
@@ -57,12 +62,17 @@ class CalculatorController {
         this.attDisplay();
     }
 
+    error(){
+        this._displayEl.innerHTML = 'ERROR';
+        this._prevEl.innerHTML = '';
+        this._ifResult = true;
+    }
+
     returnLast(){
         return this._expressionList[this._expressionList.length-1];
     }
 
     ferifyOperator(val){
-
         return ['×','÷','+','-'].indexOf(val)>-1;
     }
 
@@ -87,7 +97,6 @@ class CalculatorController {
             }
             
         }
-        console.log(this._expressionList);
         this.attDisplay();
     }
 
@@ -104,41 +113,123 @@ class CalculatorController {
         return [-1,'']
     }
 
-    calculate(){
-        for(let i = 0; i < this._expressionList.length; i+=2){
-            this._expressionList[i] = parseFloat(this._expressionList[i]);
+    calculate(arr){
+        for(let i = 0; i < arr.length; i+=2){
+            arr[i] = parseFloat(arr[i]);
         }
         
-        while(this.multIndexOf(this._expressionList,['×','÷'])[0]>-1 ){
-            let operation = this.multIndexOf(this._expressionList,['×','÷']); // [index, 'el']
+        while(this.multIndexOf(arr,['×','÷'])[0]>-1 ){
+            let operation = this.multIndexOf(arr,['×','÷']); // [index, 'el']
             let result;
             switch(operation[1]){
                 case '÷':
-                    result = this._expressionList[operation[0]-1]/this._expressionList[operation[0]+1];
+                    result = arr[operation[0]-1]/arr[operation[0]+1];
                     break;
                 case '×':
-                    result = this._expressionList[operation[0]-1]*this._expressionList[operation[0]+1];
+                    result = arr[operation[0]-1]*arr[operation[0]+1];
                     break;
             }
-            this._expressionList.splice(operation[0]-1,3,result);
+            arr.splice(operation[0]-1,3,result);
             
         }
 
-        while(this.multIndexOf(this._expressionList,['+','-'])[0]>-1 ){
-            let operation = this.multIndexOf(this._expressionList,['+','-']); // [index, 'el']
+        while(this.multIndexOf(arr,['+','-'])[0]>-1 ){
+            let operation = this.multIndexOf(arr,['+','-']); // [index, 'el']
             let result;
             switch(operation[1]){
                 case '+':
-                    result = this._expressionList[operation[0]-1]+this._expressionList[operation[0]+1];
+                    result = arr[operation[0]-1]+arr[operation[0]+1];
                     break;
                 case '-':
-                    result = this._expressionList[operation[0]-1]-this._expressionList[operation[0]+1];
+                    result = arr[operation[0]-1]-arr[operation[0]+1];
                     break;
             }
-            this._expressionList.splice(operation[0]-1,3,result);
+            arr.splice(operation[0]-1,3,result);
             
         }
+        this._ifResult = true;
+        arr[0] = arr[0].toString();
+        this.attDisplay();
+    }
 
+    calcPrev() {
+        let lisrPrev = [];
+        this._expressionList.forEach((v)=>{
+            lisrPrev.push(v);
+        })
+        this.calculate(lisrPrev);
+        this._ifResult = false;
+        if(isNaN(lisrPrev[0]))
+            return;
+        this._prev = lisrPrev.join('');
+        this.attDisplay();
+    }
+
+    initAddEventsKeyboardy(){
+        document.addEventListener('keyup',(e)=>{
+            switch (e.key) {
+                case 'c':  //AC
+                    this.clear();
+                    break;
+                case 'Backspace': //backspace
+                    if(this._ifResult == true){
+                        this.clear();
+                    }
+                    this.eraser();
+                    this.calcPrev();
+                    break;
+                case 'Enter':   //=
+                    if(this._ifResult == true){
+                        return;
+                    }
+                    this._prev = '';
+                    this.calculate(this._expressionList);
+                    break;                
+                case '+':
+                case '-':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                case '0':
+                case '.':
+                    
+                    if(this._ifResult == true){
+                        this.clear();
+                        this._ifResult = false;
+                    }
+                    
+                    this.addExpressionValues(e.key);
+                    this.calcPrev();
+                    break;
+                case '/':  //÷
+                    if(this._ifResult == true){
+                        this.clear();
+                        this._ifResult = false;
+                    }
+                    
+                    this.addExpressionValues('÷');
+                    this.calcPrev();
+                    break;
+                case '*':  //×
+                    if(this._ifResult == true){
+                        this.clear();
+                        this._ifResult = false;
+                    }
+                    
+                    this.addExpressionValues('×');
+                    this.calcPrev();
+                    break;
+                    
+            }
+
+
+        })
     }
 
     initAddEventsButtons() {
@@ -153,13 +244,22 @@ class CalculatorController {
                         this.clear();
                         break;
                     case 'backspace':
+                        if(this._ifResult == true){
+                            this.clear();
+                        }
                         this.eraser();
+                        this.calcPrev();
                         break;
                     case '=':
-                        this.calculate();
+                        if(this._ifResult == true){
+                            return;
+                        }
+                        this._prev = '';
+                        this.calculate(this._expressionList);
                         break;
                     case '1/x':
                         this.inverse();
+                        this.calcPrev();
                         break;
                     case '+':
                     case '-':
@@ -176,12 +276,21 @@ class CalculatorController {
                     case '9':
                     case '0':
                     case '.':
+                        
+                        if(this._ifResult == true){
+                            this.clear();
+                            this._ifResult = false;
+                        }
+                        
                         this.addExpressionValues(value);
+                        this.calcPrev();
                         break;
+                }
+                
+                if(isNaN(this._expressionList[0])){
+                    this.error();
                 }
             })
         });
-
-
     }
 }
