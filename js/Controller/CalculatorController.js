@@ -234,11 +234,9 @@ class CalculatorController {
 
     initAddEventsButtons() {
         let buttons = document.querySelectorAll('table.buttons td');
-
         buttons.forEach(button => {
             button.addEventListener('click', () => {
                 let value = button.innerHTML;
-
                 switch (value) {
                     case 'AC':
                         this.clear();
