@@ -91,6 +91,56 @@ class CalculatorController {
         this.attDisplay();
     }
 
+    multIndexOf(arrMain,arr){
+        for(let i = 0; i < arrMain.length; i++){
+            let v = arrMain[i];
+            for(let i2 = 0; i2 < arr.length; i2++){
+                let v2 = arr[i2];
+                if(v==v2){
+                    return [i,v2];
+                }
+            }
+        }
+        return [-1,'']
+    }
+
+    calculate(){
+        for(let i = 0; i < this._expressionList.length; i+=2){
+            this._expressionList[i] = parseFloat(this._expressionList[i]);
+        }
+        
+        while(this.multIndexOf(this._expressionList,['×','÷'])[0]>-1 ){
+            let operation = this.multIndexOf(this._expressionList,['×','÷']); // [index, 'el']
+            let result;
+            switch(operation[1]){
+                case '÷':
+                    result = this._expressionList[operation[0]-1]/this._expressionList[operation[0]+1];
+                    break;
+                case '×':
+                    result = this._expressionList[operation[0]-1]*this._expressionList[operation[0]+1];
+                    break;
+            }
+            this._expressionList.splice(operation[0]-1,3,result);
+            
+        }
+
+        while(this.multIndexOf(this._expressionList,['+','-'])[0]>-1 ){
+            let operation = this.multIndexOf(this._expressionList,['+','-']); // [index, 'el']
+            let result;
+            switch(operation[1]){
+                case '+':
+                    result = this._expressionList[operation[0]-1]+this._expressionList[operation[0]+1];
+                    break;
+                case '-':
+                    result = this._expressionList[operation[0]-1]-this._expressionList[operation[0]+1];
+                    break;
+            }
+            this._expressionList.splice(operation[0]-1,3,result);
+            
+        }
+
+    }
+
     initAddEventsButtons() {
         let buttons = document.querySelectorAll('table.buttons td');
 
@@ -106,6 +156,7 @@ class CalculatorController {
                         this.eraser();
                         break;
                     case '=':
+                        this.calculate();
                         break;
                     case '1/x':
                         this.inverse();
